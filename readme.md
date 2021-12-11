@@ -1,8 +1,14 @@
 # dithering
 
-i found a new cool dither algorithm on twitter
+toying around with different dithering techniques!
+
+check it out here: https://simulacroix.github.io/dithering/
+
+i found a cool dither algorithm on twitter: https://twitter.com/lorenschmidt/status/1468671174821486594?s=20
 
 this is relevant to my recent efforts to crochet cool pixel patterns and stuff
+
+so I wanted to make an interactive pattern maker
 
 ## basic design
 
@@ -16,23 +22,18 @@ steps to draw pattern:
 - map grid to canvas so pixels are sharp and clear
 - draw grid using these boxes
 
-like, a function:
-```
-func gridToCoords(width,height,output_width,output_height)
-```
+### 1. generate input images based on params & blend
+    - random grayscale pixels (bright values from 0-1)
+    - a diagonal gradient for fun
+    - a solid color pass, maybe
 
-and it'll export, like, a list of corners
-```
-input: 3, 2, 600, 400
-(a 3x2 graph mapped onto a 600x400 canvas)
+### 1b post-processing
+    - currently no middle step here, might add later
 
-output:
-[
-  // 6 pixels
-  [],
-  [],
-]
-```
+### 2. dither input image based on params
+resultant pixel is posturized (rounded up or down) after blending with other patterns based on params:
+- random noise
+- maze
 
 ## potential features
 

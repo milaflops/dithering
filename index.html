@@ -18,15 +18,53 @@
 </head>
 <body>
     <h1>miaow miaow</h1>
-    <span>Weight:</span>
+    <h2>Image Generation</h2>
+    <span>Random</span>
     <input
         type="range"
         min="0"
         max="100"
         value="50"
         class="weight"
-        id="weightRange"
-    />
+        id="imageNoise"
+    /><br/>
+    <span>Diagonal Gradient</span>
+    <input
+        type="range"
+        min="0"
+        max="100"
+        value="50"
+        class="weight"
+        id="imageGradient"
+    /><br/>
+    <h2>Dithering Pass</h2>
+    <span>Input Image:</span>
+    <input
+        type="range"
+        min="0"
+        max="100"
+        value="50"
+        class="weight"
+        id="ditherImage"
+    /><br/>
+    <span>Random Noise:</span>
+    <input
+        type="range"
+        min="0"
+        max="100"
+        value="50"
+        class="weight"
+        id="ditherNoise"
+    /><br/>
+    <span>Mazing:</span>
+    <input
+        type="range"
+        min="0"
+        max="100"
+        value="50"
+        class="weight"
+        id="ditherMaze"
+    /><br/>
     <canvas
         id="graphdisplayer"
         width="800"
