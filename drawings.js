@@ -4,7 +4,7 @@
 // mikayla 2021
 
 // random number cache & regenerator
-// this prevents annoying static when changing parameters
+// this prevents static when changing parameters
 // and prevents this static from obfuscating how the sliders change the image
 const {makeRandomizer, reRandomize} = (() => {
     const lookupSize = 12329; // just an arbitrary prime number
