@@ -3,11 +3,14 @@
 //
 // mikayla 2021
 
-// random number cache
+// random number cache & regenerator
+// this prevents annoying static when changing parameters
+// and prevents this static from obfuscating how the sliders change the image
 const {makeRandomizer, reRandomize} = (() => {
     const lookupSize = 12329; // just an arbitrary prime number
     let lookupTable = [];
 
+    // run once to populate lookup table, and expose to world for regeneration
     const populateLookupTable = () => {
         lookupTable = [];
         for(let i = 0; i < lookupSize; i++) {
@@ -15,8 +18,8 @@ const {makeRandomizer, reRandomize} = (() => {
         }
     }
 
-    // takes "seed" (rough starting index) from 0-1 & returns a function
-    // that gives you the next number (looping)
+    // takes "seed" (rough starting position) from 0-1 & returns a function
+    // which gives you the next number (looping)
     const makeRandomizer = seed => {
         let index = Math.round(seed * lookupSize);
         return () => {
@@ -28,33 +31,29 @@ const {makeRandomizer, reRandomize} = (() => {
     populateLookupTable();
 
     return {
-        reRandomize: populateLookupTable,
-        makeRandomizer
+        makeRandomizer,
+        reRandomize: populateLookupTable
     }
 })();
 
 // make the base image (noise, gradient, etc.)
 const makeBaseImage = ({base, image}) => {
-    // get base parameters
-    let { width, height } = base;
-    // get image parameters
-    let { noise, gradient, solidWhite, solidBlack } = image;
     // set comparator for shading the gradient
-    let comparator = (width - 1) + (height - 1);
+    let comparator = (base.width - 1) + (base.height - 1);
     let grid = [];
     let rand = makeRandomizer(0.25);
-    for (let i=0; i<height; i++) {
+    for (let i=0; i<base.height; i++) {
         let row = [];
-        for (let j=0; j<width; j++) {
+        for (let j=0; j<base.width; j++) {
             // weight each contribution according to params
             row.push((
-                rand() * noise
+                rand() * image.noise
             ) + (
-                ((i + j) / comparator) * gradient
+                ((i + j) / comparator) * image.gradient
             ) + (
-                0 * solidBlack
+                0 * image.solidBlack
             ) + (
-                1 * solidWhite
+                1 * image.solidWhite
             ));
         }
         grid.push(row);
@@ -80,10 +79,43 @@ const ditherPrePass = (grid,{dither}) => {
                 )
             ) + (
                 dither.checkerboard * (
-                    ( row_idx + col_idx ) % 2 == 0 ? 0 : 0.75
+                    ( row_idx + col_idx ) % 2 == 0 ? 0.25 : 0.75
                 )
             )
         ))
+    ))
+}
+
+// experimenting with a new blending mode (not super great yet) 
+const newDitherPrePass = (grid,{dither}) => {
+    let rand = makeRandomizer(0.75);
+    return grid.map((row,row_idx) => (
+        row.map((element,col_idx) => {
+            let ditherFilter = (
+                dither.image *
+                element
+            ) + (
+                dither.noise *
+                rand()
+            ) + (
+                dither.maze * (
+                    (row_idx % 2 == 0 ? 0 : 0.5) +
+                    (col_idx % 2 == 0 ? 0 : 0.5)
+                )
+            ) + (
+                dither.checkerboard * (
+                    ( row_idx + col_idx ) % 2 == 0 ? 0 : 0.75
+                )
+            )
+            // weight is how close base image is to middle grey
+            // weight == 0 when image == 0
+            // weight == 1 when image == 0.5
+            // weight == 0 when image == 1
+            let weight = 1 - (Math.abs(element - 0.5) * 2)
+            return (
+                (ditherFilter * weight) + (element * (1 - weight))
+            )
+        })
     ))
 }
 
@@ -100,6 +132,7 @@ const posturize = (grid,{base}) => {
 const fullGenerate = params =>
     posturize(ditherPrePass(makeBaseImage(params),params),params)
 
+// plant the rectangles onto the grid based on input grid and params
 const drawScaledImage = (canvas,grid,params) => {
     const ctx = canvas.getContext("2d");
     const {contrast, borderWidth} = params.display;
@@ -194,6 +227,7 @@ function throttle(func, wait) {
     };
 };
 
+// wait for elements to be on page before rendering
 document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("graphdisplayer");
     
@@ -230,6 +264,8 @@ document.addEventListener("DOMContentLoaded", () => {
         limitedRedraw()
     })
 
+    // updates slider text spans with normalized values
+    // hopefully this helps the user understand how things are being blended
     const sliderDisplays = {
         image: {
             noise: document.getElementById("imageNoiseDisp"),
@@ -245,12 +281,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    const percentString = float =>
-        Math.round(float * 100) + "%"
+    const percentString = float => Math.round(float * 100) + "%"
 
     const updateSliderDisplays = () => {
         params = normalizeParams(parameters);
-        console.info(params);
         sliderDisplays.image.noise.innerHTML = percentString(params.image.noise);
         sliderDisplays.image.gradient.innerHTML = percentString(params.image.gradient);
         sliderDisplays.image.solidWhite.innerHTML = percentString(params.image.solidWhite);
@@ -261,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
         sliderDisplays.dither.checkerboard.innerHTML = percentString(params.dither.checkerboard);
     }
 
-    // attach to image generation sliders
+    // attach listeners to image generation sliders
     document.getElementById("imageNoise").addEventListener("input", event => {
         parameters.image.noise = event.target.value / 100
         updateSliderDisplays()
@@ -283,7 +317,7 @@ document.addEventListener("DOMContentLoaded", () => {
         limitedRedraw()
     })
 
-    // attach to dithering sliders
+    // attach listeners to dithering sliders
     document.getElementById("ditherImage").addEventListener("input", event => {
         parameters.dither.image = event.target.value / 100
         updateSliderDisplays()
@@ -305,12 +339,13 @@ document.addEventListener("DOMContentLoaded", () => {
         limitedRedraw()
     })
 
-    // attach to buttons
+    // rerandomize upon button click
     document.getElementById("reRandomize").addEventListener("click", event => {
         reRandomize()
         limitedRedraw()
     })
 
+    // clear canvas, generate a new grid, and draw onto canvas
     const redraw = () => {
         clearCanvas(canvas)
         let params = normalizeParams(parameters);
