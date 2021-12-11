@@ -59,7 +59,6 @@ const makeGrid = ({base, image}) => {
 }
 
 const ditherPrePass = (grid,{dither}) => {
-    // let { image, noise, maze } = params.dither;
     let rand = makeRandomizer(0.75);
     return grid.map((row,row_idx) => (
         row.map((element,col_idx) => (
@@ -84,18 +83,15 @@ const ditherPrePass = (grid,{dither}) => {
 }
 
 // convert from float to 1 or 0
-// eventually maybe let this be multiple levels
 const posturize = (grid,{base}) => {
     return grid.map(row => (
-        row.map(element => {
-            return element > 0.5 ? 1 : 0
-            // return Math.floor(element * (base.levels) - 1) / base.levels
-        })
+        row.map(element => (
+            (base.posturize ? (element > 0.5 ? 1 : 0) : element)
+        ))
     ))
 }
 
 const fullGenerate = params => {
-    // return ditherPrePass(makeGrid(params),params)
     return posturize(ditherPrePass(makeGrid(params),params),params)
 }
 
@@ -139,14 +135,14 @@ const clearRect = (canvas) => {
 }
 
 const normalizeParams = ({base, display, image, dither}) => {
-    // basically makes all "image" params total to 1
-    // and all "dither" params total to 1
+    // normalize all all "image" params so they total to 1
+    // and all "dither" params so they total to 1
     let imageGenTotal = image.noise + image.gradient + image.solidWhite + image.solidBlack;
+    let ditherTotal = dither.image + dither.noise + dither.maze;
+    // prevent zero division
     if (imageGenTotal == 0) {
-        // prevent zero division
         imageGenTotal = 0.01
     }
-    let ditherTotal = dither.image + dither.noise + dither.maze;
     if (ditherTotal == 0) {
         ditherTotal = 0.01
     }
@@ -168,37 +164,37 @@ const normalizeParams = ({base, display, image, dither}) => {
     }
 }
 
-// always good to have, taken from internet
+// always good to have throttling on canvas stuff, taken from internet
 function throttle(func, wait) {
     var context, args, result;
     var timeout = null;
     var previous = 0;
     var later = function() {
-      previous = Date.now();
-      timeout = null;
-      result = func.apply(context, args);
-      if (!timeout) context = args = null;
-    };
-    return function() {
-      var now = Date.now();
-      if (!previous) previous = now;
-      var remaining = wait - (now - previous);
-      context = this;
-      args = arguments;
-      if (remaining <= 0 || remaining > wait) {
-        if (timeout) {
-          clearTimeout(timeout);
-          timeout = null;
-        }
-        previous = now;
+        previous = Date.now();
+        timeout = null;
         result = func.apply(context, args);
         if (!timeout) context = args = null;
-      } else if (!timeout) {
-        timeout = setTimeout(later, remaining);
-      }
-      return result;
     };
-  };
+    return function() {
+        var now = Date.now();
+        if (!previous) previous = now;
+        var remaining = wait - (now - previous);
+        context = this;
+        args = arguments;
+        if (remaining <= 0 || remaining > wait) {
+            if (timeout) {
+                clearTimeout(timeout);
+                timeout = null;
+            }
+            previous = now;
+            result = func.apply(context, args);
+            if (!timeout) context = args = null;
+        } else if (!timeout) {
+            timeout = setTimeout(later, remaining);
+        }
+        return result;
+    };
+};
 
 document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("graphdisplayer");
@@ -207,7 +203,8 @@ document.addEventListener("DOMContentLoaded", () => {
         base: {
             width: 25,
             height: 25,
-            levels: 2
+            levels: 2,
+            posturize: true
         },
         display: {
             contrast: 0.75,
@@ -232,11 +229,6 @@ document.addEventListener("DOMContentLoaded", () => {
         parameters.base.height = event.target.value;
         parameters.base.width = event.target.value;
         document.getElementById("baseResolutionDisp").innerHTML = parameters.base.height;
-        limitedRedraw()
-    })
-    document.getElementById("posturization").addEventListener("input", event => {
-        parameters.base.levels = event.target.value;
-        document.getElementById("posturizationDisp").innerHTML = parameters.base.levels;
         limitedRedraw()
     })
 
@@ -282,18 +274,14 @@ document.addEventListener("DOMContentLoaded", () => {
         limitedRedraw()
     })
 
-    // handy function for getting the normalized parameters
-    // const params = () => normalizeParams(parameters);
-
     const redraw = () => {
         clearRect(canvas)
         let params = normalizeParams(parameters);
-        // let grid = dither(makeGrid(params), params);
-        // let grid = makeGrid(params);
         let grid = fullGenerate(params);
         drawScaledImage(canvas, grid, params)
     }
 
+    // limit redraws to 15 frames per second
     const limitedRedraw = throttle(redraw, 1000 / 15)
 
     redraw()
