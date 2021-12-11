@@ -67,7 +67,7 @@ const dither = (grid,{dither}) => {
                 dither.image *
                 element
             ) + (
-                dither.noist *
+                dither.noise *
                 rand()
             ) + (
                 dither.maze * (
@@ -76,8 +76,7 @@ const dither = (grid,{dither}) => {
                 )
             ) + (
                 dither.checkerboard * (
-                    ( row_idx + col_idx ) % 2 == 0
-                 ? 0 : 1
+                    ( row_idx + col_idx ) % 2 == 0 ? 0 : 0.75
                 )
             ) > 0.5 ? 1 : 0
         ))
