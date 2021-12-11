@@ -24,7 +24,7 @@
         type="range"
         min="0"
         max="100"
-        value="50"
+        value="25"
         class="weight"
         id="imageNoise"
     /><br/>
@@ -33,9 +33,27 @@
         type="range"
         min="0"
         max="100"
-        value="50"
+        value="75"
         class="weight"
         id="imageGradient"
+    /><br/>
+    <span>Solid White</span>
+    <input
+        type="range"
+        min="0"
+        max="100"
+        value="0"
+        class="weight"
+        id="imageSolidWhite"
+    /><br/>
+    <span>Solid Black</span>
+    <input
+        type="range"
+        min="0"
+        max="100"
+        value="0"
+        class="weight"
+        id="imageSolidBlack"
     /><br/>
     <h2>Dithering Pass</h2>
     <span>Input Image:</span>
@@ -43,7 +61,7 @@
         type="range"
         min="0"
         max="100"
-        value="50"
+        value="100"
         class="weight"
         id="ditherImage"
     /><br/>
@@ -52,7 +70,7 @@
         type="range"
         min="0"
         max="100"
-        value="50"
+        value="25"
         class="weight"
         id="ditherNoise"
     /><br/>
@@ -64,6 +82,13 @@
         value="50"
         class="weight"
         id="ditherMaze"
+    /><br/>
+    <span>Re-generate random noise:</span>
+    <input
+        type="button"
+        class="button"
+        id="reRandomize"
+        value="Re-Randomize"
     /><br/>
     <canvas
         id="graphdisplayer"

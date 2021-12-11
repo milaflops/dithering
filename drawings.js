@@ -2,34 +2,34 @@
 
 // made this to make some dithered patterns for crochet
 
-// const makeRandomGrid = (width,height) => {
-//     let grid = [];
-//     for (let i=0; i<height; i++) {
-//         let row = [];
-//         for (let j=0; j<width; j++) {
-//             row.push(Math.floor(Math.random()*255))
-//         }
-//         grid.push(row);
-//     }
-//     return grid;
-// }
+// shoddy deterministic randomizer
+const {makeRandomizer, reRandomize} = (() => {
+    const lookupSize = 10000;
+    let lookupTable = [];
 
-// const makeGradientGrid = (width,height) => {
-//     // top left will be 0, bottom right will be 255
-//     let comparator = (width - 1) + (height - 1);
-//     let grid = [];
-//     for (let i=0; i<height; i++) {
-//         let row = [];
-//         for (let j=0; j<width; j++) {
-//             // row.push(Math.floor(Math.random()*255))
-//             row.push(
-//                 (i + j) / comparator
-//             );
-//         }
-//         grid.push(row);
-//     }
-//     return grid;
-// }
+    const populateLookupTable = () => {
+        lookupTable = [];
+        console.info("populating lookup table")
+        for(let i = 0; i < lookupSize; i++) {
+            lookupTable.push(Math.random())
+        }
+    }
+
+    const makeRandomizer = seed => {
+        let index = Math.round(seed * lookupSize);
+        return () => {
+            index = (index + 1) % lookupSize;
+            return lookupTable[index];
+        }
+    }
+
+    populateLookupTable();
+
+    return {
+        makeRandomizer,
+        reRandomize: populateLookupTable
+    }
+})();
 
 const makeGrid = ({base, image}) => {
     // get base parameters
@@ -38,12 +38,13 @@ const makeGrid = ({base, image}) => {
     let { noise, gradient, solidWhite, solidBlack } = image;
     // set comparator for shading the gradient
     let comparator = (width - 1) + (height - 1);
+    let rand = makeRandomizer(0.25);
     let grid = [];
     for (let i=0; i<height; i++) {
         let row = [];
         for (let j=0; j<width; j++) {
             row.push((
-                Math.random() * noise
+                rand() * noise
             ) + (
                 ((i + j) / comparator) * gradient
             ) + (
@@ -57,84 +58,61 @@ const makeGrid = ({base, image}) => {
     return grid;
 }
 
-const basicDither = (grid) => (
-    grid.map(row => (
-        row.map(element => {
-            let test = Math.random()
-            if (test > element) {
-                return 1
-            } else {
-                return 0
-            }
-        })
-    ))
-)
-
-const weightedDither = (grid,weight) => (
-    grid.map(row => (
-        row.map(element => {
-            // let test = Math.random()
-            let pixel = (element * (1 - weight)) + (Math.random() * weight)
-            if (pixel > 0.5) {
-                return 1
-            } else {
-                return 0
-            }
-        })
-    ))
-)
-
-const dither = (grid,{dither}) => (
+const dither = (grid,{dither}) => {
     // let { image, noise, maze } = params.dither;
-    grid.map((row,row_idx) => (
+    let rand = makeRandomizer(0.75);
+    return grid.map((row,row_idx) => (
         row.map((element,col_idx) => (
             (element * dither.image) +
-            (Math.random() * dither.noise) +
+            (rand() * dither.noise) +
             ((
                 (row_idx % 2 == 0 ? 0 : 0.5) +
                 (col_idx % 2 == 0 ? 0 : 0.5)
             ) * dither.maze) > 0.5 ? 1 : 0
         ))
     ))
-)
+}
 
-const drawScaledImage = (canvas,grid) => {
+const drawScaledImage = (canvas,grid,params) => {
     const ctx = canvas.getContext("2d");
+    const {contrast, borderWidth} = params.display;
 
     // TODO: come up with a better way to fit the grid into the canvas
     // (maybe support margins for stitch number markings, or something? )
 
-    // get canvas min dimension to know how to scale
-    const maxCanvasDimension = Math.min(canvas.height, canvas.width)
-
+    // shoddily fit the pixel art into the canvas dimensions
     const gridHeight = grid.length
     const gridWidth = grid[0].length
 
-    const maxGridDimension = Math.max(gridHeight, gridWidth)
-
-    const scalar = maxCanvasDimension / maxGridDimension
+    const scalar = Math.min(canvas.height, canvas.width) / Math.max(gridHeight, gridWidth)
 
     grid.forEach((row,row_idx) => {
         row.forEach((cell,col_idx) => {
-            let shade = cell * 255
+            // contrast of 0 == goes from 0.5-0.5
+            // contrast of 0.9 == goes from 0.05-0.95
+            // contrast of 1 == goes from 0-1
+            let shade = 255 * (
+                (0.5 * (1 - contrast)) +
+                (cell * contrast)
+            );
             ctx.fillStyle = `rgb(${shade},${shade},${shade})`
             ctx.fillRect(
-                (col_idx * scalar) + 0.5,
-                (row_idx * scalar) + 0.5,
-                scalar-0.5,
-                scalar-0.5
+                (col_idx * scalar) + borderWidth,
+                (row_idx * scalar) + borderWidth,
+                scalar-borderWidth,
+                scalar-borderWidth
             )
         })
     })
 }
 
-const clearRect = (canvas,grid) => {
+const clearRect = (canvas) => {
     const ctx = canvas.getContext("2d");
 
     ctx.clearRect(0,0,canvas.width,canvas.height)
 }
 
-const normalizeParams = ({base, image, dither}) => {
+const normalizeParams = ({base, display, image, dither}) => {
     // basically makes all "image" params total to 1
     // and all "dither" params total to 1
     let imageGenTotal = image.noise + image.gradient + image.solidWhite + image.solidBlack;
@@ -148,6 +126,7 @@ const normalizeParams = ({base, image, dither}) => {
     }
     return {
         base,
+        display,
         image: {
             noise: image.noise / imageGenTotal,
             gradient: image.gradient / imageGenTotal,
@@ -163,31 +142,31 @@ const normalizeParams = ({base, image, dither}) => {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-
     const canvas = document.getElementById("graphdisplayer");
-    // draw a fucking gradient in a 12x12 grid
-    // let grid = basicDither(makeGradientGrid(75,100));
     
     const parameters = {
         base: {
             width: 25,
             height: 25
         },
+        display: {
+            contrast: 0.75,
+            borderWidth: 0.5
+        },
         image: {
-            noise: 0,
-            gradient: 1,
+            noise: 0.25,
+            gradient: 0.75,
             solidWhite: 0,
             solidBlack: 0
         },
         dither: {
-            image: 0.5,
-            noise: 0.5,
-            maze: 0
+            image: 1,
+            noise: 0.25,
+            maze: 0.5
         }
     }
 
-    const params = () => normalizeParams(parameters);
-
+    // attach to image generation sliders
     document.getElementById("imageNoise").addEventListener("input", event => {
         parameters.image.noise = event.target.value / 100
         redraw()
@@ -196,7 +175,16 @@ document.addEventListener("DOMContentLoaded", () => {
         parameters.image.gradient = event.target.value / 100
         redraw()
     })
+    document.getElementById("imageSolidWhite").addEventListener("input", event => {
+        parameters.image.solidWhite = event.target.value / 100
+        redraw()
+    })
+    document.getElementById("imageSolidBlack").addEventListener("input", event => {
+        parameters.image.solidBlack = event.target.value / 100
+        redraw()
+    })
 
+    // attach to dithering sliders
     document.getElementById("ditherImage").addEventListener("input", event => {
         parameters.dither.image = event.target.value / 100
         redraw()
@@ -210,11 +198,20 @@ document.addEventListener("DOMContentLoaded", () => {
         redraw()
     })
 
+    // attach to buttons
+    document.getElementById("reRandomize").addEventListener("click", event => {
+        reRandomize()
+        redraw()
+    })
+
+    // handy function for getting the normalized parameters
+    // const params = () => normalizeParams(parameters);
+
     const redraw = () => {
         clearRect(canvas)
-        let grid = dither(makeGrid(params()), params());
-        // let grid = makeGrid(params());
-        drawScaledImage(canvas, grid)
+        let params = normalizeParams(parameters);
+        let grid = dither(makeGrid(params), params);
+        drawScaledImage(canvas, grid, params)
     }
 
     redraw()
