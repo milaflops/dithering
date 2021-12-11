@@ -63,15 +63,22 @@ const dither = (grid,{dither}) => {
     let rand = makeRandomizer(0.75);
     return grid.map((row,row_idx) => (
         row.map((element,col_idx) => (
-            (element * dither.image) +
-            (rand() * dither.noise) +
-            ((
-                (row_idx % 2 == 0 ? 0 : 0.5) +
-                (col_idx % 2 == 0 ? 0 : 0.5)
-            ) * dither.maze) +
             (
-                (( row_idx + col_idx ) % 2 == 0
-                 ? 0 : 0.5) * dither.checkerboard
+                dither.image *
+                element
+            ) + (
+                dither.noist *
+                rand()
+            ) + (
+                dither.maze * (
+                    (row_idx % 2 == 0 ? 0 : 0.5) +
+                    (col_idx % 2 == 0 ? 0 : 0.5)
+                )
+            ) + (
+                dither.checkerboard * (
+                    ( row_idx + col_idx ) % 2 == 0
+                 ? 0 : 1
+                )
             ) > 0.5 ? 1 : 0
         ))
     ))
@@ -146,6 +153,38 @@ const normalizeParams = ({base, display, image, dither}) => {
     }
 }
 
+// always good to have, taken from internet
+function throttle(func, wait) {
+    var context, args, result;
+    var timeout = null;
+    var previous = 0;
+    var later = function() {
+      previous = Date.now();
+      timeout = null;
+      result = func.apply(context, args);
+      if (!timeout) context = args = null;
+    };
+    return function() {
+      var now = Date.now();
+      if (!previous) previous = now;
+      var remaining = wait - (now - previous);
+      context = this;
+      args = arguments;
+      if (remaining <= 0 || remaining > wait) {
+        if (timeout) {
+          clearTimeout(timeout);
+          timeout = null;
+        }
+        previous = now;
+        result = func.apply(context, args);
+        if (!timeout) context = args = null;
+      } else if (!timeout) {
+        timeout = setTimeout(later, remaining);
+      }
+      return result;
+    };
+  };
+
 document.addEventListener("DOMContentLoaded", () => {
     const canvas = document.getElementById("graphdisplayer");
     
@@ -172,46 +211,53 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // attach to settings sliders
+    document.getElementById("baseResolution").addEventListener("input", event => {
+        parameters.base.height = event.target.value;
+        parameters.base.width = event.target.value;
+        limitedRedraw()
+    })
+
     // attach to image generation sliders
     document.getElementById("imageNoise").addEventListener("input", event => {
         parameters.image.noise = event.target.value / 100
-        redraw()
+        limitedRedraw()
     })
     document.getElementById("imageGradient").addEventListener("input", event => {
         parameters.image.gradient = event.target.value / 100
-        redraw()
+        limitedRedraw()
     })
     document.getElementById("imageSolidWhite").addEventListener("input", event => {
         parameters.image.solidWhite = event.target.value / 100
-        redraw()
+        limitedRedraw()
     })
     document.getElementById("imageSolidBlack").addEventListener("input", event => {
         parameters.image.solidBlack = event.target.value / 100
-        redraw()
+        limitedRedraw()
     })
 
     // attach to dithering sliders
     document.getElementById("ditherImage").addEventListener("input", event => {
         parameters.dither.image = event.target.value / 100
-        redraw()
+        limitedRedraw()
     })
     document.getElementById("ditherNoise").addEventListener("input", event => {
         parameters.dither.noise = event.target.value / 100
-        redraw()
+        limitedRedraw()
     })
     document.getElementById("ditherMaze").addEventListener("input", event => {
         parameters.dither.maze = event.target.value / 100
-        redraw()
+        limitedRedraw()
     })
     document.getElementById("ditherCheckerboard").addEventListener("input", event => {
         parameters.dither.checkerboard = event.target.value / 100
-        redraw()
+        limitedRedraw()
     })
 
     // attach to buttons
     document.getElementById("reRandomize").addEventListener("click", event => {
         reRandomize()
-        redraw()
+        limitedRedraw()
     })
 
     // handy function for getting the normalized parameters
@@ -223,6 +269,8 @@ document.addEventListener("DOMContentLoaded", () => {
         let grid = dither(makeGrid(params), params);
         drawScaledImage(canvas, grid, params)
     }
+
+    const limitedRedraw = throttle(redraw, 1000 / 15)
 
     redraw()
 })
