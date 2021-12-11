@@ -230,39 +230,78 @@ document.addEventListener("DOMContentLoaded", () => {
         limitedRedraw()
     })
 
+    const sliderDisplays = {
+        image: {
+            noise: document.getElementById("imageNoiseDisp"),
+            gradient: document.getElementById("imageGradientDisp"),
+            solidWhite: document.getElementById("imageSolidWhiteDisp"),
+            solidBlack: document.getElementById("imageSolidBlackDisp"),
+        },
+        dither: {
+            image: document.getElementById("ditherImageDisp"),
+            noise: document.getElementById("ditherNoiseDisp"),
+            maze: document.getElementById("ditherMazeDisp"),
+            checkerboard: document.getElementById("ditherCheckerboardDisp"),
+        }
+    }
+
+    const percentString = float =>
+        Math.round(float * 100) + "%"
+
+    const updateSliderDisplays = () => {
+        params = normalizeParams(parameters);
+        console.info(params);
+        sliderDisplays.image.noise.innerHTML = percentString(params.image.noise);
+        sliderDisplays.image.gradient.innerHTML = percentString(params.image.gradient);
+        sliderDisplays.image.solidWhite.innerHTML = percentString(params.image.solidWhite);
+        sliderDisplays.image.solidBlack.innerHTML = percentString(params.image.solidBlack);
+        sliderDisplays.dither.image.innerHTML = percentString(params.dither.image);
+        sliderDisplays.dither.noise.innerHTML = percentString(params.dither.noise);
+        sliderDisplays.dither.maze.innerHTML = percentString(params.dither.maze);
+        sliderDisplays.dither.checkerboard.innerHTML = percentString(params.dither.checkerboard);
+    }
+
     // attach to image generation sliders
     document.getElementById("imageNoise").addEventListener("input", event => {
         parameters.image.noise = event.target.value / 100
+        updateSliderDisplays()
         limitedRedraw()
     })
     document.getElementById("imageGradient").addEventListener("input", event => {
         parameters.image.gradient = event.target.value / 100
+        updateSliderDisplays()
         limitedRedraw()
     })
     document.getElementById("imageSolidWhite").addEventListener("input", event => {
         parameters.image.solidWhite = event.target.value / 100
+        updateSliderDisplays()
         limitedRedraw()
     })
     document.getElementById("imageSolidBlack").addEventListener("input", event => {
         parameters.image.solidBlack = event.target.value / 100
+        updateSliderDisplays()
         limitedRedraw()
     })
 
     // attach to dithering sliders
     document.getElementById("ditherImage").addEventListener("input", event => {
         parameters.dither.image = event.target.value / 100
+        updateSliderDisplays()
         limitedRedraw()
     })
     document.getElementById("ditherNoise").addEventListener("input", event => {
         parameters.dither.noise = event.target.value / 100
+        updateSliderDisplays()
         limitedRedraw()
     })
     document.getElementById("ditherMaze").addEventListener("input", event => {
         parameters.dither.maze = event.target.value / 100
+        updateSliderDisplays()
         limitedRedraw()
     })
     document.getElementById("ditherCheckerboard").addEventListener("input", event => {
         parameters.dither.checkerboard = event.target.value / 100
+        updateSliderDisplays()
         limitedRedraw()
     })
 
@@ -283,4 +322,5 @@ document.addEventListener("DOMContentLoaded", () => {
     const limitedRedraw = throttle(redraw, 1000 / 15)
 
     redraw()
+    updateSliderDisplays()
 })
