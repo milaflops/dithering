@@ -38,8 +38,8 @@ const makeGrid = ({base, image}) => {
     let { noise, gradient, solidWhite, solidBlack } = image;
     // set comparator for shading the gradient
     let comparator = (width - 1) + (height - 1);
-    let rand = makeRandomizer(0.25);
     let grid = [];
+    let rand = makeRandomizer(0.25);
     for (let i=0; i<height; i++) {
         let row = [];
         for (let j=0; j<width; j++) {
@@ -100,13 +100,11 @@ const drawScaledImage = (canvas,grid,params) => {
     const {contrast, borderWidth} = params.display;
 
     // TODO: come up with a better way to fit the grid into the canvas
-    // (maybe support margins for stitch number markings, or something? )
+    // (maybe support margins for stitch number markings, or something?)
 
-    // shoddily fit the pixel art into the canvas dimensions
-    const gridHeight = grid.length
-    const gridWidth = grid[0].length
+    // it's just a square now, so I'm leaving it as-is
 
-    const scalar = Math.min(canvas.height, canvas.width) / Math.max(gridHeight, gridWidth)
+    const scalar = Math.min(canvas.height, canvas.width) / Math.max(grid.length, grid[0].length)
 
     grid.forEach((row,row_idx) => {
         row.forEach((cell,col_idx) => {
@@ -128,17 +126,16 @@ const drawScaledImage = (canvas,grid,params) => {
     })
 }
 
-const clearRect = (canvas) => {
+const clearCanvas = (canvas) => {
     const ctx = canvas.getContext("2d");
-
     ctx.clearRect(0,0,canvas.width,canvas.height)
 }
 
+// normalize all "image" params so they total to 1
+// and all "dither" params so they total to 1
 const normalizeParams = ({base, display, image, dither}) => {
-    // normalize all all "image" params so they total to 1
-    // and all "dither" params so they total to 1
     let imageGenTotal = image.noise + image.gradient + image.solidWhite + image.solidBlack;
-    let ditherTotal = dither.image + dither.noise + dither.maze;
+    let ditherTotal = dither.image + dither.noise + dither.maze + dither.checkerboard;
     // prevent zero division
     if (imageGenTotal == 0) {
         imageGenTotal = 0.01
@@ -275,7 +272,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
 
     const redraw = () => {
-        clearRect(canvas)
+        clearCanvas(canvas)
         let params = normalizeParams(parameters);
         let grid = fullGenerate(params);
         drawScaledImage(canvas, grid, params)
