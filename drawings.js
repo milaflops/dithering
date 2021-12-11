@@ -1,15 +1,15 @@
-// for drawing grids on canvases and stuff
+// for drawing grids on canvases and stuff!
+// I made this to generate some dithered patterns for crochet
+//
+// mikayla 2021
 
-// made this to make some dithered patterns for crochet
-
-// shoddy deterministic randomizer
+// shoddy deterministic randomizer & regenerator
 const {makeRandomizer, reRandomize} = (() => {
     const lookupSize = 10000;
     let lookupTable = [];
 
     const populateLookupTable = () => {
         lookupTable = [];
-        console.info("populating lookup table")
         for(let i = 0; i < lookupSize; i++) {
             lookupTable.push(Math.random())
         }
@@ -68,7 +68,11 @@ const dither = (grid,{dither}) => {
             ((
                 (row_idx % 2 == 0 ? 0 : 0.5) +
                 (col_idx % 2 == 0 ? 0 : 0.5)
-            ) * dither.maze) > 0.5 ? 1 : 0
+            ) * dither.maze) +
+            (
+                (( row_idx + col_idx ) % 2 == 0
+                 ? 0 : 0.5) * dither.checkerboard
+            ) > 0.5 ? 1 : 0
         ))
     ))
 }
@@ -136,7 +140,8 @@ const normalizeParams = ({base, display, image, dither}) => {
         dither: {
             image: dither.image / ditherTotal,
             noise: dither.noise / ditherTotal,
-            maze: dither.maze / ditherTotal
+            maze: dither.maze / ditherTotal,
+            checkerboard: dither.checkerboard / ditherTotal
         }
     }
 }
@@ -162,7 +167,8 @@ document.addEventListener("DOMContentLoaded", () => {
         dither: {
             image: 1,
             noise: 0.25,
-            maze: 0.5
+            maze: 0.5,
+            checkerboard: 0
         }
     }
 
@@ -195,6 +201,10 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     document.getElementById("ditherMaze").addEventListener("input", event => {
         parameters.dither.maze = event.target.value / 100
+        redraw()
+    })
+    document.getElementById("ditherCheckerboard").addEventListener("input", event => {
+        parameters.dither.checkerboard = event.target.value / 100
         redraw()
     })
 
