@@ -3,9 +3,9 @@
 //
 // mikayla 2021
 
-// shoddy deterministic randomizer & regenerator
+// random number cache
 const {makeRandomizer, reRandomize} = (() => {
-    const lookupSize = 10000;
+    const lookupSize = 12329; // just an arbitrary prime number
     let lookupTable = [];
 
     const populateLookupTable = () => {
@@ -15,6 +15,8 @@ const {makeRandomizer, reRandomize} = (() => {
         }
     }
 
+    // takes "seed" (rough starting index) from 0-1 & returns a function
+    // that gives you the next number (looping)
     const makeRandomizer = seed => {
         let index = Math.round(seed * lookupSize);
         return () => {
@@ -26,12 +28,13 @@ const {makeRandomizer, reRandomize} = (() => {
     populateLookupTable();
 
     return {
-        makeRandomizer,
-        reRandomize: populateLookupTable
+        reRandomize: populateLookupTable,
+        makeRandomizer
     }
 })();
 
-const makeGrid = ({base, image}) => {
+// make the base image (noise, gradient, etc.)
+const makeBaseImage = ({base, image}) => {
     // get base parameters
     let { width, height } = base;
     // get image parameters
@@ -43,6 +46,7 @@ const makeGrid = ({base, image}) => {
     for (let i=0; i<height; i++) {
         let row = [];
         for (let j=0; j<width; j++) {
+            // weight each contribution according to params
             row.push((
                 rand() * noise
             ) + (
@@ -58,6 +62,7 @@ const makeGrid = ({base, image}) => {
     return grid;
 }
 
+// modify base image 
 const ditherPrePass = (grid,{dither}) => {
     let rand = makeRandomizer(0.75);
     return grid.map((row,row_idx) => (
@@ -82,7 +87,7 @@ const ditherPrePass = (grid,{dither}) => {
     ))
 }
 
-// convert from float to 1 or 0
+// round up or down to 1 or 0
 const posturize = (grid,{base}) => {
     return grid.map(row => (
         row.map(element => (
@@ -91,9 +96,9 @@ const posturize = (grid,{base}) => {
     ))
 }
 
-const fullGenerate = params => {
-    return posturize(ditherPrePass(makeGrid(params),params),params)
-}
+// compose base image, dither prepass, and posturization
+const fullGenerate = params =>
+    posturize(ditherPrePass(makeBaseImage(params),params),params)
 
 const drawScaledImage = (canvas,grid,params) => {
     const ctx = canvas.getContext("2d");
@@ -101,16 +106,12 @@ const drawScaledImage = (canvas,grid,params) => {
 
     // TODO: come up with a better way to fit the grid into the canvas
     // (maybe support margins for stitch number markings, or something?)
-
     // it's just a square now, so I'm leaving it as-is
-
     const scalar = Math.min(canvas.height, canvas.width) / Math.max(grid.length, grid[0].length)
 
     grid.forEach((row,row_idx) => {
         row.forEach((cell,col_idx) => {
-            // contrast of 0 == goes from 0.5-0.5
-            // contrast of 0.9 == goes from 0.05-0.95
-            // contrast of 1 == goes from 0-1
+            // contrast only affects final display shade
             let shade = 255 * (
                 (0.5 * (1 - contrast)) +
                 (cell * contrast)
