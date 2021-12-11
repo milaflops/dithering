@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="./drawings.js"></script>
-    <title>miaow miaow</title>
+    <title>dithered pixel bonanza</title>
     <style>
         * {
             background-color: #AAAAAA;
@@ -13,12 +13,21 @@
 
         canvas {
           border: 1px solid black;
+          float: left;
+          display: block;
+          margin-right: 2vh;
+          margin-left: 2vh;
         }
     </style>
 </head>
 <body>
-    <h1>miaow miaow</h1>
+    <h1>dither pattern maker</h1>
     <p>dithering toy, <a href="https://github.com/simulacroix/dithering">code here</a></p>
+    <canvas
+        id="graphdisplayer"
+        width="800"
+        height="800"
+    ></canvas>
     <h2>Display settings</h2>
     <span>Size</span>
     <input
@@ -28,7 +37,22 @@
         value="25"
         class="weight"
         id="baseResolution"
-    /><br/>
+    /><span id="baseResolutionDisp">
+        25
+    </span>
+    <br/>
+    <span>Levels</span>
+    <input
+        type="range"
+        min="2"
+        max="15"
+        value="2"
+        class="weight"
+        id="posturization"
+    /><span id="posturizationDisp">
+        2
+    </span>
+    <br/>
     <h2>Image Generation</h2>
     <span>Random Noise</span>
     <input
@@ -110,10 +134,6 @@
         id="reRandomize"
         value="Re-Randomize"
     /><br/>
-    <canvas
-        id="graphdisplayer"
-        width="800"
-        height="800"
-    ></canvas>
+
 </body>
 </html>

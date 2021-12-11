@@ -58,7 +58,7 @@ const makeGrid = ({base, image}) => {
     return grid;
 }
 
-const dither = (grid,{dither}) => {
+const ditherPrePass = (grid,{dither}) => {
     // let { image, noise, maze } = params.dither;
     let rand = makeRandomizer(0.75);
     return grid.map((row,row_idx) => (
@@ -78,9 +78,25 @@ const dither = (grid,{dither}) => {
                 dither.checkerboard * (
                     ( row_idx + col_idx ) % 2 == 0 ? 0 : 0.75
                 )
-            ) > 0.5 ? 1 : 0
+            )
         ))
     ))
+}
+
+// convert from float to 1 or 0
+// eventually maybe let this be multiple levels
+const posturize = (grid,{base}) => {
+    return grid.map(row => (
+        row.map(element => {
+            return element > 0.5 ? 1 : 0
+            // return Math.floor(element * (base.levels) - 1) / base.levels
+        })
+    ))
+}
+
+const fullGenerate = params => {
+    // return ditherPrePass(makeGrid(params),params)
+    return posturize(ditherPrePass(makeGrid(params),params),params)
 }
 
 const drawScaledImage = (canvas,grid,params) => {
@@ -190,7 +206,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const parameters = {
         base: {
             width: 25,
-            height: 25
+            height: 25,
+            levels: 2
         },
         display: {
             contrast: 0.75,
@@ -214,6 +231,12 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("baseResolution").addEventListener("input", event => {
         parameters.base.height = event.target.value;
         parameters.base.width = event.target.value;
+        document.getElementById("baseResolutionDisp").innerHTML = parameters.base.height;
+        limitedRedraw()
+    })
+    document.getElementById("posturization").addEventListener("input", event => {
+        parameters.base.levels = event.target.value;
+        document.getElementById("posturizationDisp").innerHTML = parameters.base.levels;
         limitedRedraw()
     })
 
@@ -265,7 +288,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const redraw = () => {
         clearRect(canvas)
         let params = normalizeParams(parameters);
-        let grid = dither(makeGrid(params), params);
+        // let grid = dither(makeGrid(params), params);
+        // let grid = makeGrid(params);
+        let grid = fullGenerate(params);
         drawScaledImage(canvas, grid, params)
     }
 
