@@ -33,8 +33,10 @@ steps to draw pattern:
 
     these are blended with the base image, also based on weights
 3. posturize
+
     round the values up or down to make a monochrome bitmap
 4. draw the image
+
     fit the grid onto the static canvas and put down a bunch of rectangles
 
 ## potential features
