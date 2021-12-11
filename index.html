@@ -10,10 +10,23 @@
         * {
             background-color: #AAAAAA;
         }
+
+        canvas {
+          border: 1px solid black;
+        }
     </style>
 </head>
 <body>
     <h1>miaow miaow</h1>
+    <span>Weight:</span>
+    <input
+        type="range"
+        min="0"
+        max="100"
+        value="50"
+        class="weight"
+        id="weightRange"
+    />
     <canvas
         id="graphdisplayer"
         width="800"
