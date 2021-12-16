@@ -80,6 +80,7 @@ const floydSteinberg = grid => {
         else if (col_idx > grid[0].length - 1)
             return true
     }
+    // getter and setter that doesn't break when OOB
     const getGrid = (row_idx,col_idx) => {
         if (outOfBounds(row_idx,col_idx))
             return 0
@@ -127,7 +128,7 @@ const ditherPrePass = (grid,{dither}) => {
                 )
             ) + (
                 dither.checkerboard * (
-                    ( row_idx + col_idx ) % 2 == 0 ? 0.25 : 0.75
+                    ( row_idx + col_idx ) % 2 == 0 ? 0 : 1
                 )
             ) + (
                 dither.floydSteinberg *
@@ -182,6 +183,7 @@ const posturize = (grid,{base}) => {
 // compose base image, dither prepass, and posturization
 const fullGenerate = params =>
     posturize(ditherPrePass(makeBaseImage(params),params),params)
+    // ditherPrePass(makeBaseImage(params),params)
 
 // plant the rectangles onto the grid based on input grid and params
 const drawScaledImage = (canvas,grid,params) => {

@@ -7,7 +7,7 @@
     <script src="./drawings.js"></script>
     <title>dithered pixel bonanza</title>
     <style>
-        * {
+        body {
             background-color: #AAAAAA;
         }
 
@@ -17,6 +17,63 @@
           display: block;
           margin-right: 2vh;
           margin-left: 2vh;
+        }
+
+        div.slider {
+            display: flex;
+            flex-direction: column;
+            max-width: 300px;
+            background-size: cover;
+            /* border: 1px solid black; */
+            border-radius: 15px;
+            padding: 2px 10px 4px 10px;
+            margin: 5px 0 5px 0;
+        }
+
+        div.slider-label {
+            /* font-family: Arial, Helvetica, sans-serif; */
+            font-weight: bold;
+            color: black;
+        }
+
+        div.slider-label .number {
+            float: right;
+        }
+
+        div.slider.randomNoise {
+            background-image: url('./images/input_random_noise.png');
+        }
+
+        div.slider.diagonalGradient {
+            background-image: url('./images/input_diagonal_gradient.png');
+        }
+
+        div.slider.solidWhite {
+            background-image: url('./images/input_solid_white.png');
+        }
+
+        div.slider.solidBlack {
+            background-image: url('./images/input_solid_black.png');
+        }
+
+        div.slider.ditherInputImage {
+            background-image: url('./images/dither_input.png');
+        }
+
+        div.slider.ditherRandomNoise {
+            background-image: url('./images/dither_random_noise.png');
+        }
+
+        div.slider.ditherMazing {
+            background-image: url('./images/dither_mazing.png');
+        }
+
+        div.slider.ditherFloydSteinberg {
+            background-image: url('./images/dither_floyd_steinberg.png');
+        }
+
+        div.slider.ditherCheckerboard {
+            background-image: url('./images/dither_checkerboard.png');
         }
     </style>
 </head>
@@ -30,128 +87,161 @@
     ></canvas>
 
     <h2>Display settings</h2>
-    <span>Size</span>
-    <input
-        type="range"
-        min="2"
-        max="100"
-        value="25"
-        class="weight"
-        id="baseResolution"
-    /><span id="baseResolutionDisp">
-        25
-    </span>
-    <br/>
+
+    <div class="slider">
+        <div class="slider-label">
+            <span>Size</span>
+            <span class="number" id="baseResolutionDisp">
+                25x25
+            </span>
+        </div>
+        <input
+            type="range"
+            min="2"
+            max="100"
+            value="25"
+            class="weight"
+            id="baseResolution"
+        />
+    </div>
 
     <h2>Image Generation</h2>
-    <span>Random Noise</span>
-    <input
-        type="range"
-        min="0"
-        max="100"
-        value="25"
-        class="weight"
-        id="imageNoise"
-    />
-    <span id="imageNoiseDisp"></span>
-    <br/>
 
-    <span>Diagonal Gradient</span>
-    <input
-        type="range"
-        min="0"
-        max="100"
-        value="75"
-        class="weight"
-        id="imageGradient"
-    />
-    <span id="imageGradientDisp"></span>
-    <br/>
+    <div class="slider randomNoise">
+        <div class="slider-label">
+            <span>Random Noise</span>
+            <span class="number" id="imageNoiseDisp"></span>
+        </div>
+        <input
+            type="range"
+            min="0"
+            max="100"
+            value="25"
+            class="weight"
+            id="imageNoise"
+        />
+    </div>
 
-    <span>Solid White</span>
-    <input
-        type="range"
-        min="0"
-        max="100"
-        value="0"
-        class="weight"
-        id="imageSolidWhite"
-    />
-    <span id="imageSolidWhiteDisp"></span>
-    <br/>
+    <div class="slider diagonalGradient">
+        <div class="slider-label">
+            <span>Diagonal Gradient</span>
+            <span class="number" id="imageGradientDisp"></span>
+        </div>
+        <input
+            type="range"
+            min="0"
+            max="100"
+            value="75"
+            class="weight"
+            id="imageGradient"
+        />
+    </div>
 
-    <span>Solid Black</span>
-    <input
-        type="range"
-        min="0"
-        max="100"
-        value="0"
-        class="weight"
-        id="imageSolidBlack"
-    />
-    <span id="imageSolidBlackDisp"></span>
-    <br/>
+    <div class="slider solidWhite">
+        <div class="slider-label">
+            <span>Solid White</span>
+            <span class="number" id="imageSolidWhiteDisp"></span>
+        </div>
+        <input
+            type="range"
+            min="0"
+            max="100"
+            value="0"
+            class="weight"
+            id="imageSolidWhite"
+        />
+    </div>
+
+    <div class="slider solidBlack">
+        <div class="slider-label">
+            <span>Solid Black</span>
+            <span class="number" id="imageSolidBlackDisp"></span>
+        </div>
+        <input
+            type="range"
+            min="0"
+            max="100"
+            value="0"
+            class="weight"
+            id="imageSolidBlack"
+        />
+    </div>
 
     <h2>Dithering Blend</h2>
-    <span>Input Image:</span>
-    <input
-        type="range"
-        min="0"
-        max="100"
-        value="100"
-        class="weight"
-        id="ditherImage"
-    />
-    <span id="ditherImageDisp"></span>
-    <br/>
+    <div class="slider ditherInputImage">
+        <div class="slider-label">
+            <span>Input Image:</span>
+            <span class="number" id="ditherImageDisp"></span>
+        </div>
+        <input
+            type="range"
+            min="0"
+            max="100"
+            value="100"
+            class="weight"
+            id="ditherImage"
+        />
+    </div>
 
-    <span>Random Noise:</span>
-    <input
-        type="range"
-        min="0"
-        max="100"
-        value="25"
-        class="weight"
-        id="ditherNoise"
-    />
-    <span id="ditherNoiseDisp"></span>
-    <br/>
+    <div class="slider ditherRandomNoise">
+        <div class="slider-label">
+            <span>Random Noise:</span>
+            <span class="number" id="ditherNoiseDisp"></span>
+        </div>
+        <input
+            type="range"
+            min="0"
+            max="100"
+            value="25"
+            class="weight"
+            id="ditherNoise"
+        />
+    </div>
 
-    <span>Mazing:</span>
-    <input
-        type="range"
-        min="0"
-        max="100"
-        value="50"
-        class="weight"
-        id="ditherMaze"
-    />
-    <span id="ditherMazeDisp"></span>
-    <br/>
+    <div class="slider ditherMazing">
+        <div class="slider-label">
+            <span>Mazing:</span>
+            <span class="number" id="ditherMazeDisp"></span>
+        </div>
+        <input
+            type="range"
+            min="0"
+            max="100"
+            value="50"
+            class="weight"
+            id="ditherMaze"
+        />
+    </div>
 
-    <span>Floyd-Steinberg:</span>
-    <input
-        type="range"
-        min="0"
-        max="100"
-        value="0"
-        class="weight"
-        id="ditherFloydSteinberg"
-    />
-    <span id="ditherFloydSteinbergDisp"></span>
-    <br/>
+    <div class="slider ditherFloydSteinberg">
+        <div class="slider-label">
+            <span>Floyd-Steinberg:</span>
+            <span class="number" id="ditherFloydSteinbergDisp"></span>
+        </div>
+        <input
+            type="range"
+            min="0"
+            max="100"
+            value="0"
+            class="weight"
+            id="ditherFloydSteinberg"
+        />
+    </div>
 
-    <span>Checkerboard:</span>
-    <input
-        type="range"
-        min="0"
-        max="100"
-        value="0"
-        class="weight"
-        id="ditherCheckerboard"
-    />
-    <span id="ditherCheckerboardDisp"></span>
-    <br/>
+    <div class="slider ditherCheckerboard">
+        <div class="slider-label">
+            <span>Checkerboard:</span>
+            <span class="number" id="ditherCheckerboardDisp"></span>
+        </div>
+        <input
+            type="range"
+            min="0"
+            max="100"
+            value="0"
+            class="weight"
+            id="ditherCheckerboard"
+        />
+    </div>
 
     <span>Re-generate random noise:</span>
     <input
