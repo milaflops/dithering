@@ -92,7 +92,7 @@
     <span id="imageSolidBlackDisp"></span>
     <br/>
 
-    <h2>Dithering Pass</h2>
+    <h2>Dithering Blend</h2>
     <span>Input Image:</span>
     <input
         type="range"
@@ -127,6 +127,18 @@
         id="ditherMaze"
     />
     <span id="ditherMazeDisp"></span>
+    <br/>
+
+    <span>Floyd-Steinberg:</span>
+    <input
+        type="range"
+        min="0"
+        max="100"
+        value="0"
+        class="weight"
+        id="ditherFloydSteinberg"
+    />
+    <span id="ditherFloydSteinbergDisp"></span>
     <br/>
 
     <span>Checkerboard:</span>

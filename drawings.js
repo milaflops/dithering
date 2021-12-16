@@ -61,9 +61,57 @@ const makeBaseImage = ({base, image}) => {
     return grid;
 }
 
+const duplicateGrid = grid =>
+    grid.map(row => (
+        row.map(cell => cell)
+    ))
+
+// diffuse the error in the bulldozer fashion
+const floydSteinberg = grid => {
+    grid = duplicateGrid(grid)
+    // sloppy input check
+    const outOfBounds = (row_idx,col_idx) => {
+        if (row_idx < 0)
+            return true
+        else if (row_idx > grid.length -  1)
+            return true
+        else if (col_idx < 0)
+            return true
+        else if (col_idx > grid[0].length - 1)
+            return true
+    }
+    const getGrid = (row_idx,col_idx) => {
+        if (outOfBounds(row_idx,col_idx))
+            return 0
+        return grid[row_idx][col_idx]
+    }
+    const updateGrid = (row_idx,col_idx,newvalue) => {
+        if (!outOfBounds(row_idx,col_idx))
+            grid[row_idx][col_idx] = newvalue
+    }
+    for(let row_idx = 0; row_idx < grid.length; row_idx++) {
+        for(let col_idx = 0; col_idx < grid[row_idx].length; col_idx++) {
+            let oldpixel = grid[row_idx][col_idx]
+            let newpixel = Math.round(oldpixel)
+            grid[row_idx][col_idx] = newpixel
+            let error = oldpixel - newpixel
+            // x+1, y
+            updateGrid(row_idx,col_idx+1,getGrid(row_idx,col_idx+1) + (error * (7/16)))
+            // x - 1, y + 1
+            updateGrid(row_idx+1,col_idx-1,getGrid(row_idx+1,col_idx-1) + (error * (3/16)))
+            // x, y+1
+            updateGrid(row_idx+1,col_idx,getGrid(row_idx+1,col_idx) + (error * (5/16)))
+            // x + 1, y + 1
+            updateGrid(row_idx+1,col_idx+1,getGrid(row_idx+1,col_idx+1) + (error * (1/16)))
+        }
+    }
+    return grid;
+}
+
 // modify base image 
 const ditherPrePass = (grid,{dither}) => {
     let rand = makeRandomizer(0.75);
+    let fs_dithered = floydSteinberg(grid)
     return grid.map((row,row_idx) => (
         row.map((element,col_idx) => (
             (
@@ -81,6 +129,9 @@ const ditherPrePass = (grid,{dither}) => {
                 dither.checkerboard * (
                     ( row_idx + col_idx ) % 2 == 0 ? 0.25 : 0.75
                 )
+            ) + (
+                dither.floydSteinberg *
+                fs_dithered[row_idx][col_idx]
             )
         ))
     ))
@@ -169,7 +220,7 @@ const clearCanvas = (canvas) => {
 // and all "dither" params so they total to 1
 const normalizeParams = ({base, display, image, dither}) => {
     let imageGenTotal = image.noise + image.gradient + image.solidWhite + image.solidBlack;
-    let ditherTotal = dither.image + dither.noise + dither.maze + dither.checkerboard;
+    let ditherTotal = dither.image + dither.noise + dither.maze + dither.floydSteinberg + dither.checkerboard;
     // prevent zero division
     if (imageGenTotal == 0) {
         imageGenTotal = 0.01
@@ -190,6 +241,7 @@ const normalizeParams = ({base, display, image, dither}) => {
             image: dither.image / ditherTotal,
             noise: dither.noise / ditherTotal,
             maze: dither.maze / ditherTotal,
+            floydSteinberg: dither.floydSteinberg / ditherTotal,
             checkerboard: dither.checkerboard / ditherTotal
         }
     }
@@ -252,6 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
             image: 1,
             noise: 0.25,
             maze: 0.5,
+            floydSteinberg: 0,
             checkerboard: 0
         }
     }
@@ -260,7 +313,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("baseResolution").addEventListener("input", event => {
         parameters.base.height = event.target.value;
         parameters.base.width = event.target.value;
-        document.getElementById("baseResolutionDisp").innerHTML = parameters.base.height;
+        document.getElementById("baseResolutionDisp").innerHTML = (parameters.base.width + " x " + parameters.base.height);
         limitedRedraw()
     })
 
@@ -277,6 +330,7 @@ document.addEventListener("DOMContentLoaded", () => {
             image: document.getElementById("ditherImageDisp"),
             noise: document.getElementById("ditherNoiseDisp"),
             maze: document.getElementById("ditherMazeDisp"),
+            floydSteinberg: document.getElementById("ditherFloydSteinbergDisp"),
             checkerboard: document.getElementById("ditherCheckerboardDisp"),
         }
     }
@@ -292,6 +346,7 @@ document.addEventListener("DOMContentLoaded", () => {
         sliderDisplays.dither.image.innerHTML = percentString(params.dither.image);
         sliderDisplays.dither.noise.innerHTML = percentString(params.dither.noise);
         sliderDisplays.dither.maze.innerHTML = percentString(params.dither.maze);
+        sliderDisplays.dither.floydSteinberg.innerHTML = percentString(params.dither.floydSteinberg);
         sliderDisplays.dither.checkerboard.innerHTML = percentString(params.dither.checkerboard);
     }
 
@@ -330,6 +385,11 @@ document.addEventListener("DOMContentLoaded", () => {
     })
     document.getElementById("ditherMaze").addEventListener("input", event => {
         parameters.dither.maze = event.target.value / 100
+        updateSliderDisplays()
+        limitedRedraw()
+    })
+    document.getElementById("ditherFloydSteinberg").addEventListener("input", event => {
+        parameters.dither.floydSteinberg = event.target.value / 100
         updateSliderDisplays()
         limitedRedraw()
     })
